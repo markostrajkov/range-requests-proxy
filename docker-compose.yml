@@ -1,0 +1,10 @@
+version: '2'
+services:
+  range-request-proxy:
+    build: .
+    command: bash /usr/local/range-requests-proxy/start_all.sh
+    ports:
+     - "8000:8000"
+     - "9000:9000"
+    volumes:
+     - .:/usr/local/range-requests-proxy
