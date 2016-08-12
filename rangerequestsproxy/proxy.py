@@ -14,10 +14,8 @@ import tornado.ioloop
 import tornado.iostream
 import tornado.web
 
-try:
-    from httprange import RangeNotSatisfiableException, parse_range
-except (SystemError, ImportError):
-    from .httprange import RangeNotSatisfiableException, parse_range
+from rangerequestsproxy.httprange import RangeNotSatisfiableException, parse_range
+
 
 __all__ = ['ProxyHandler', 'run_proxy']
 MAX_RANGE = 30
@@ -163,5 +161,5 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
 
-    print ("Starting HTTP proxy on port %d" % port)
+    print ("Starting Range Requests HTTP proxy on port %d" % port)
     run_proxy(port)

@@ -4,6 +4,9 @@ Built using Tornado (tested with version 4.4.1), supports HTTP GET method.
 
 Can be used as standalone script, or integrated with your Tornado app.
 
+If you need a loopback interface to test this proxy, please take a look at:
+https://github.com/markostrajkov/range-requests-proxy-loopback
+
 
 ### Setup
 
@@ -20,6 +23,22 @@ Can be used as standalone script, or integrated with your Tornado app.
     from rangerequestsproxy.proxy import run_proxy
 
     run_proxy(8000)
+
+### Usage with Docker
+
+    #build the image
+    docker build -t range-requests-proxy .
+
+    #run the image
+    docker run -t -p 127.0.0.1:8000:8000 --net="host" range-requests-proxy
+
+### Usage with Docker Compose
+
+    #build it
+    docker-compose build
+
+    #run it
+    docker-compose up
 
 
 ### License and copyright

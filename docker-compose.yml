@@ -2,9 +2,9 @@ version: '2'
 services:
   range-request-proxy:
     build: .
-    command: bash /usr/local/range-requests-proxy/start_all.sh
+    command: python /usr/local/range-requests-proxy/rangerequestsproxy/proxy.py
     ports:
      - "8000:8000"
-     - "9000:9000"
     volumes:
      - .:/usr/local/range-requests-proxy
+    network_mode: "host"
