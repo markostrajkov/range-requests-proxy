@@ -50,8 +50,19 @@ But you need to install following packages: ['pytest>=2.8.0', 'mock==2.0.0']
 ### Manually testing the proxy
 
     You can use following curl commands to fire up a few curl request and test the proxy manually:
-    curl -i --header "Range: bytes=50-100" http://localhost:8000/img.jpg
-    curl -i --header "Range: bytes=50-100" http://localhost:8000/img.jpg?range=bytes=50-100
+
+    # successful 206 requests
+    curl -i --header "Range: bytes=0-50" http://localhost:8000/img.jpg
+    curl -i --header "Range: bytes=0-" http://localhost:8000/img.jpg
+    curl -i --header "Range: bytes=-50" http://localhost:8000/img.jpg
+    curl -i --header "Range: bytes=0-50" http://localhost:8000/img.jpg?range=bytes=0-50
+
+    # Requested range not satisfiable 416 requests
+    curl -i --header "Range: bytes=0-50" http://localhost:8000/img.jpg?range=bytes=50-100
+    curl -i --header "Range: bytes=a-50" http://localhost:8000/img.jpg
+
+    # Stats:
+    curl -i http://localhost:8000/stats
 
 ### License and copyright
 
