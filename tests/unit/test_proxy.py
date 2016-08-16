@@ -98,7 +98,7 @@ class TestProxyHandler(unittest.TestCase):
         def fetch_mock(req, callback, raise_error=False):
             all_headers = MagicMock()
             all_headers.get_all.return_value = [('Content-Type', 'image/jpeg'),
-                                                ('Content-Range', 'bytes 50-100/1000'),
+                                                ('Content-Range', 'bytes 0-50/1000'),
                                                 ('X-Http-Reason', 'Partial Content')]
             response_mock = MagicMock(error=None, code=206, body=b'0123456789', headers=all_headers)
             callback(response_mock)
@@ -112,7 +112,7 @@ class TestProxyHandler(unittest.TestCase):
         self.assertEqual(proxy_handler._headers._dict['Content-Length'], '10')
         self.assertEqual(proxy_handler._headers._dict['Accept-Ranges'], 'bytes')
         self.assertEqual(proxy_handler._headers._dict['Content-Type'], 'image/jpeg')
-        self.assertEqual(proxy_handler._headers._dict['Content-Range'], 'bytes 50-100/1000')
+        self.assertEqual(proxy_handler._headers._dict['Content-Range'], 'bytes 0-50/1000')
         self.assertEqual(proxy_handler._headers._dict['X-Http-Reason'], 'Partial Content')
 
     @patch('rangerequestsproxy.proxy.PROXY_ADDRESS', 'http://127.0.0.1:9000')
@@ -213,3 +213,44 @@ class TestProxyHandler(unittest.TestCase):
         self.assertEqual(result, {"error": "There is no such file"})
         self.assertEqual(proxy_handler._status_code, 404)
         self.assertEqual(proxy_handler._headers._dict['Content-Type'], 'application/json')
+
+    @patch('rangerequestsproxy.proxy.PROXY_ADDRESS', 'http://127.0.0.1:9000')
+    @patch('rangerequestsproxy.proxy.tornado.httpclient.AsyncHTTPClient')
+    @patch('rangerequestsproxy.proxy.TOTAL_BYTES_TRANSFERRED', 0)
+    def test_successful_206_request_with_valid_ranges_and_ifrange(self, http_client_mock):
+        """
+            Simulates following request:
+            curl -i --header "Range: bytes=0-50" \
+                    --header "If-Range: Sat, 29 Oct 1994 19:43:31 GMT" \
+                    http://localhost:8000/img.jpg?range=bytes=0-50
+            P.S. Proxy does not validate IF-Range parameter, it just passes it further
+            HTTP Date Format: RFC7231, Chapter 7.1.1.1
+        """
+        proxy_handler = ProxyHandler(application=MagicMock(),
+                                     request=MagicMock(headers={'Range': 'bytes=0-50',
+                                                                'If-Range': 'Sat, 29 Oct 1994 19:43:31 GMT'},
+                                                       uri='/img.jpg?range=bytes=0-50'))
+        proxy_handler.finish = MagicMock()
+        get_argument_mock = MagicMock()
+        get_argument_mock.return_value = 'bytes=0-50'
+        proxy_handler.get_argument = get_argument_mock
+
+        def fetch_mock(req, callback, raise_error=False):
+            all_headers = MagicMock()
+            all_headers.get_all.return_value = [('Content-Type', 'image/jpeg'),
+                                                ('Content-Range', 'bytes 0-50/1000'),
+                                                ('X-Http-Reason', 'Partial Content')]
+            response_mock = MagicMock(error=None, code=206, body=b'0123456789', headers=all_headers)
+            callback(response_mock)
+
+        http_client_mock.return_value.fetch = fetch_mock
+
+        proxy_handler.get()
+
+        self.assertEqual(proxy_handler._write_buffer[0], b'0123456789')
+        self.assertEqual(proxy_handler._status_code, 206)
+        self.assertEqual(proxy_handler._headers._dict['Content-Length'], '10')
+        self.assertEqual(proxy_handler._headers._dict['Accept-Ranges'], 'bytes')
+        self.assertEqual(proxy_handler._headers._dict['Content-Type'], 'image/jpeg')
+        self.assertEqual(proxy_handler._headers._dict['Content-Range'], 'bytes 0-50/1000')
+        self.assertEqual(proxy_handler._headers._dict['X-Http-Reason'], 'Partial Content')
