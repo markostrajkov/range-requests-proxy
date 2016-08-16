@@ -34,4 +34,6 @@ setup(
     tests_require=['pytest>=2.8.0', 'mock==2.0.0'],
     install_requires=['tornado==4.4.1', 'pycurl==7.43.0'],
     packages=['rangerequestsproxy'],
+    license='BSD',
+    url='https://github.com/markostrajkov/range-requests-proxy',
 )
